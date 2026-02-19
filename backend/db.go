@@ -5,11 +5,11 @@ import (
 	"log"
 	"os"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
 
-var conn *pgx.Conn
+var conn *pgxpool.Pool
 
 func initDB() {
 	godotenv.Load()
@@ -17,15 +17,20 @@ func initDB() {
 	if databaseURL == "" {
 		log.Fatal("DATABASE_URL not set")
 	}
+
 	var err error
-	conn, err = pgx.Connect(context.Background(), databaseURL)
+	conn, err = pgxpool.New(context.Background(), databaseURL)
 	if err != nil {
 		log.Fatal("Error connecting to database:", err)
 	}
+
+	if err := conn.Ping(context.Background()); err != nil {
+		log.Fatal("Error pinging database:", err)
+	}
+
 	log.Println("Connected to PostgreSQL")
 }
 
-// Obtiene o crea el carrito del usuario
 func getOrCreateCart(userID int) (int, error) {
 	var cartID int
 	err := conn.QueryRow(context.Background(),
@@ -33,7 +38,6 @@ func getOrCreateCart(userID int) (int, error) {
 	).Scan(&cartID)
 
 	if err != nil {
-		// No existe, lo creamos
 		err = conn.QueryRow(context.Background(),
 			"INSERT INTO carts (user_id) VALUES ($1) RETURNING id", userID,
 		).Scan(&cartID)
