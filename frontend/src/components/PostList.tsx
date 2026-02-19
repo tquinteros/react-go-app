@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createPost, deletePost, fetchPosts } from '../features/posts/api'
+import { useAuth } from '@/hooks/use-auth'
 import { useState } from 'react'
 
 const PostList = () => {
     const [title, setTitle] = useState('')
     const [body, setBody] = useState('')
     const queryClient = useQueryClient()
+    const { accessToken } = useAuth()
 
     const createPostMutation = useMutation({
         mutationFn: ({ title, body }: { title: string; body: string }) => createPost(title, body),
@@ -17,7 +19,7 @@ const PostList = () => {
     })
 
     const deletePostMutation = useMutation({
-        mutationFn: (id: number) => deletePost(id),
+        mutationFn: (id: number) => deletePost(id, accessToken),
         onSuccess: () => {
             console.log('Post deleted successfully')
             queryClient.invalidateQueries({ queryKey: ['posts'] })

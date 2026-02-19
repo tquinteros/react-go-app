@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useMutation } from "@tanstack/react-query"
+import { useNavigate } from "react-router-dom"
 import { login, register } from "../api"
 import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
@@ -11,12 +12,14 @@ export default function AuthForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const { login: setAuth } = useAuth()
+  const navigate = useNavigate()
 
   const mutation = useMutation({
     mutationFn: () =>
       isLogin ? login(email, password) : register(email, password),
     onSuccess: (data) => {
       setAuth(data.access_token, data.user)
+      navigate("/", { replace: true })
     },
   })
 

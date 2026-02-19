@@ -24,11 +24,17 @@ export async function createPost(title: string, body: string): Promise<Post> {
   return res.json()
 }
 
-export async function deletePost(id: number): Promise<void> {
+export async function deletePost(
+  id: number,
+  accessToken: string | null
+): Promise<void> {
+  const headers: HeadersInit = {}
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`
   const res = await fetch(`${API_URL}/posts/${id}`, {
     method: "DELETE",
+    headers,
   })
-  if (!res.ok) throw new Error("Error deleting post")
+  if (!res.ok) throw new Error(res.status === 401 ? "Please log in to delete" : "Error deleting post")
 }
 
 /** Create post – Postman: POST http://localhost:8080/posts, Body raw JSON: { "title": "...", "body": "..." } */

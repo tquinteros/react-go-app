@@ -1,6 +1,7 @@
 import './App.css'
 import PostList from './components/PostList'
 import Header from './components/Header'
+import { ProtectedRoute } from './components/ProtectedRoute'
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import ProductsList from './features/products/components/ProductsList'
 import { Toaster } from "@/components/ui/sonner"
@@ -24,9 +25,11 @@ function App() {
             </div>} />
 
           <Route path="/products" element={
-            <div className="container mx-auto py-16">
-              <ProductsList />
-            </div>} />
+            <ProtectedRoute>
+              <div className="container mx-auto py-16">
+                <ProductsList />
+              </div>
+            </ProtectedRoute>} />
           <Route path="/posts" element={
             <div className="container mx-auto py-16">
               <PostList />
