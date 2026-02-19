@@ -17,7 +17,7 @@ function decodeJwtPayload(token: string): { user_id?: number; email?: string } {
 
 function loadSession(): { token: string; user: { id: number; email: string } } | null {
   try {
-    const raw = sessionStorage.getItem(SESSION_KEY)
+    const raw = localStorage.getItem(SESSION_KEY)
     if (!raw) return null
     const data = JSON.parse(raw) as { access_token: string; user: { id: number; email: string } }
     if (!data?.access_token || !data?.user) return null
@@ -28,11 +28,11 @@ function loadSession(): { token: string; user: { id: number; email: string } } |
 }
 
 function saveSession(token: string, user: { id: number; email: string }) {
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify({ access_token: token, user }))
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ access_token: token, user }))
 }
 
 function clearSession() {
-  sessionStorage.removeItem(SESSION_KEY)
+  localStorage.removeItem(SESSION_KEY)
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
