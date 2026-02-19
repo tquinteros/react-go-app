@@ -18,9 +18,15 @@ export async function createProduct(product: Omit<Product, "id">): Promise<Produ
   return res.json()
 }
 
-export async function deleteProduct(id: number): Promise<void> {
+export async function deleteProduct(
+  id: number,
+  accessToken: string
+): Promise<void> {
   const res = await fetch(`${API_URL}/products/${id}`, {
     method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
   })
   if (!res.ok) throw new Error("Error deleting product")
 }

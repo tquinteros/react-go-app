@@ -4,9 +4,11 @@ import { ModeToggle } from './theme-toggle'
 import { Button } from '@/components/ui/button'
 import { ShoppingCart } from 'lucide-react'
 import { useCartStore } from '@/features/cart/store'
+import { useAuth } from '@/hooks/use-auth'
 
 function Header() {
   const { openCart, items } = useCartStore()
+  const { user, logout, isAuthenticated } = useAuth()
   const itemCount = items.reduce((n, i) => n + i.quantity, 0)
 
   return (
@@ -34,6 +36,26 @@ function Header() {
           >
             Products
           </Link>
+          {isAuthenticated ? (
+            <>
+              <span className="text-sm text-gray-400">{user?.email}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => logout()}
+                className="text-gray-300 hover:text-white"
+              >
+                Logout
+              </Button>
+            </>
+          ) : (
+            <Link
+              to="/login"
+              className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+            >
+              Login
+            </Link>
+          )}
         </nav>
         <div className="flex items-center gap-2">
           <Button

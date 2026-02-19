@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { deleteProduct, fetchProducts } from '../api'
+import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import ProductCard from './ProductCard'
@@ -9,9 +10,11 @@ import CreateProductForm from './CreateProductForm'
 const ProductsList = () => {
     const [createOpen, setCreateOpen] = useState(false)
     const queryClient = useQueryClient()
+    const { accessToken } = useAuth()
 
     const deleteProductMutation = useMutation({
-        mutationFn: (id: number) => deleteProduct(id),
+        mutationFn: (id: number) =>
+            deleteProduct(id, accessToken!),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['products'] })
         },
