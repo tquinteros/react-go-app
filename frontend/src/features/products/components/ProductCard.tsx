@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/carousel"
 import { Button } from "@/components/ui/button"
 import type { Product } from "../types"
+import { useCartStore } from "@/features/cart/store"
 import { ShoppingCart, Tag } from "lucide-react"
 
 interface ProductCardProps {
@@ -35,8 +36,15 @@ function formatPrice(price: number) {
 }
 
 const ProductCard = ({ product, onDelete, isDeleting }: ProductCardProps) => {
+  const addItem = useCartStore((s) => s.addItem)
+  const openCart = useCartStore((s) => s.openCart)
   const images = product.images?.length ? product.images : [placeholderImage]
   const hasDiscount = product.discount > 0
+
+  const handleAddToCart = () => {
+    addItem(product)
+    openCart()
+  }
 
   return (
     <Card className="group overflow-hidden border-border/60 bg-card shadow-sm transition-all duration-300 hover:shadow-md hover:border-border">
@@ -93,7 +101,7 @@ const ProductCard = ({ product, onDelete, isDeleting }: ProductCardProps) => {
         </div>
       </CardContent>
       <CardFooter className="flex gap-2 px-4 pb-4 pt-0">
-        <Button className="flex-1" size="sm">
+        <Button className="flex-1" size="sm" onClick={handleAddToCart}>
           <ShoppingCart className="size-4" />
           Add to cart
         </Button>
