@@ -22,20 +22,22 @@ var posts = []Post{
 	{ID: 1, Title: "Hola Go", Body: "Mi primer backend"},
 }
 
-func corsHeaders(w http.ResponseWriter) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, PATCH, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, PATCH, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.Header().Set("Access-Control-Max-Age", "86400")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func postsHandler(w http.ResponseWriter, r *http.Request) {
-	corsHeaders(w)
 	w.Header().Set("Content-Type", "application/json")
-
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
 
 	if r.Method == http.MethodGet {
 		rows, err := conn.Query(context.Background(),
@@ -89,13 +91,7 @@ func postsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func postByIDHandler(w http.ResponseWriter, r *http.Request) {
-	corsHeaders(w)
 	w.Header().Set("Content-Type", "application/json")
-
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
 
 	idStr := r.URL.Path[len("/posts/"):]
 	id := 0
@@ -136,13 +132,14 @@ func initDB() {
 
 func main() {
 	initDB()
-	http.HandleFunc("/posts", postsHandler)
-	http.HandleFunc("/posts/", postByIDHandler)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/posts", postsHandler)
+	mux.HandleFunc("/posts/", postByIDHandler)
+	handler := corsMiddleware(mux)
 	log.Println("server running at http://localhost:8080")
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(http.ListenAndServe(":"+port, handler))
 }
