@@ -7,6 +7,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"os"
 	"fmt"
+	"github.com/joho/godotenv"
 )
 
 var conn *pgx.Conn
@@ -118,7 +119,7 @@ func postByIDHandler(w http.ResponseWriter, r *http.Request) {
 
 func initDB() {
 	var err error
-
+	err = godotenv.Load()
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
 		log.Fatal("DATABASE_URL not set")
