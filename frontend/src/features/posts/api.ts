@@ -1,8 +1,7 @@
 import type { Post } from "./types"
 
-
 // const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080"
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080"
+const API_URL = "http://localhost:8080"
 // export async function fetchPosts(): Promise<Post[]> {
 //   const res = await fetch("https://jsonplaceholder.typicode.com/posts")
 //   if (!res.ok) throw new Error("Error fetching posts")

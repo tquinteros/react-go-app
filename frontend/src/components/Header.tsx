@@ -21,6 +21,12 @@ function Header() {
           >
             Posts
           </Link>
+          <Link
+            to="/products"
+            className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+          >
+            Products
+          </Link>
         </nav>
       </div>
     </header>
