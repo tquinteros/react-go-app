@@ -19,7 +19,11 @@ const PostList = () => {
     const deletePostMutation = useMutation({
         mutationFn: (id: number) => deletePost(id),
         onSuccess: () => {
+            console.log('Post deleted successfully')
             queryClient.invalidateQueries({ queryKey: ['posts'] })
+        },
+        onError: (error) => {
+            console.error('Error deleting post:', error)
         },
     })
 
