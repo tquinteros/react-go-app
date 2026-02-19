@@ -2,9 +2,9 @@ import React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { deleteProduct, fetchProducts } from '../api'
 import { Button } from '@/components/ui/button'
+import ProductCard from './ProductCard'
 
 const ProductsList = () => {
-
     const queryClient = useQueryClient()
 
     const deleteProductMutation = useMutation({
@@ -24,18 +24,18 @@ const ProductsList = () => {
     }
 
     return (
-        <div>
+        <div className="space-y-6">
             <Button>Create Product</Button>
-            {products.map((product) => (
-                <div key={product.id} className="border-b border-gray-200 p-4">
-                    <h2 className="text-2xl font-bold">{product.name}</h2>
-                    <p>{product.description}</p>
-                    <p>{product.price}</p>
-                    <p>{product.images}</p>
-                    <p>{product.discount}</p>
-                    <Button onClick={() => deleteProductMutation.mutate(product.id)} disabled={deleteProductMutation.isPending}>{deleteProductMutation.isPending ? 'Deleting...' : 'Delete Product'}</Button>
-                </div>
-            ))}
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {products.map((product) => (
+                    <ProductCard
+                        key={product.id}
+                        product={product}
+                        onDelete={(id) => deleteProductMutation.mutate(id)}
+                        isDeleting={deleteProductMutation.isPending}
+                    />
+                ))}
+            </div>
         </div>
     )
 }

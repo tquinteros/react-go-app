@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import reactLogo from '../assets/react.svg'
-
+import { ModeToggle } from './theme-toggle'
 function Header() {
   return (
     <header className="border-b border-gray-700 bg-[#242424] sticky top-0 z-10">
@@ -28,6 +28,7 @@ function Header() {
             Products
           </Link>
         </nav>
+        <ModeToggle />
       </div>
     </header>
   )
