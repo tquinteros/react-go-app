@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"github.com/jackc/pgx/v5"
 	"os"
+	"fmt"
 )
 
 var conn *pgx.Conn
@@ -35,11 +36,6 @@ func postsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// if r.Method == http.MethodGet {
-	// 	json.NewEncoder(w).Encode(posts)
-	// 	return
-	// }
-
 	if r.Method == http.MethodGet {
 		rows, err := conn.Query(context.Background(),
 			"SELECT id, title, body FROM posts ORDER BY id DESC")
@@ -61,23 +57,6 @@ func postsHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(posts)
 		return
 	}
-
-	// if r.Method == http.MethodPost {
-	// 	var newPost Post
-
-	// 	err := json.NewDecoder(r.Body).Decode(&newPost)
-	// 	if err != nil {
-	// 		http.Error(w, err.Error(), http.StatusBadRequest)
-	// 		return
-	// 	}
-
-	// 	newPost.ID = len(posts) + 1
-	// 	posts = append(posts, newPost)
-
-	// 	w.WriteHeader(http.StatusCreated)
-	// 	json.NewEncoder(w).Encode(newPost)
-	// 	return
-	// }
 
 	if r.Method == http.MethodPost {
 		var newPost Post
@@ -108,18 +87,34 @@ func postsHandler(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 }
 
-// func initDB() {
-// 	var err error
+func postByIDHandler(w http.ResponseWriter, r *http.Request) {
+	corsHeaders(w)
+	w.Header().Set("Content-Type", "application/json")
 
-// 	conn, err = pgx.Connect(context.Background(),
-// 		"postgres://postgres:password@localhost:5432/blog")
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 
-// 	if err != nil {
-// 		log.Fatal("Error connecting to database:", err)
-// 	}
+	idStr := r.URL.Path[len("/posts/"):]
+	id := 0
+	fmt.Sscanf(idStr, "%d", &id)
 
-// 	log.Println("Connected to PostgreSQL")
-// }
+	if r.Method == http.MethodDelete {
+		_, err := conn.Exec(context.Background(),
+			"DELETE FROM posts WHERE id = $1", id)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
 
 func initDB() {
 	var err error
@@ -141,7 +136,7 @@ func initDB() {
 func main() {
 	initDB()
 	http.HandleFunc("/posts", postsHandler)
-
+	http.HandleFunc("/posts/", postByIDHandler)
 	log.Println("server running at http://localhost:8080")
 	port := os.Getenv("PORT")
 	if port == "" {

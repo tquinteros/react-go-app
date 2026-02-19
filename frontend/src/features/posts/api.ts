@@ -1,7 +1,8 @@
 import type { Post } from "./types"
 
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080"
+// const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080"
+const API_URL = "http://localhost:8080"
 // export async function fetchPosts(): Promise<Post[]> {
 //   const res = await fetch("https://jsonplaceholder.typicode.com/posts")
 //   if (!res.ok) throw new Error("Error fetching posts")
@@ -24,6 +25,13 @@ export async function createPost(title: string, body: string): Promise<Post> {
   })
   if (!res.ok) throw new Error("Error creating post")
   return res.json()
+}
+
+export async function deletePost(id: number): Promise<void> {
+  const res = await fetch(`${API_URL}/posts/${id}`, {
+    method: "DELETE",
+  })
+  if (!res.ok) throw new Error("Error deleting post")
 }
 
 /** Create post – Postman: POST http://localhost:8080/posts, Body raw JSON: { "title": "...", "body": "..." } */

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createPost, fetchPosts } from '../features/posts/api'
+import { createPost, deletePost, fetchPosts } from '../features/posts/api'
 import { useState } from 'react'
 
 const PostList = () => {
@@ -13,6 +13,13 @@ const PostList = () => {
             queryClient.invalidateQueries({ queryKey: ['posts'] })
             setTitle('')
             setBody('')
+        },
+    })
+
+    const deletePostMutation = useMutation({
+        mutationFn: (id: number) => deletePost(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['posts'] })
         },
     })
 
@@ -70,6 +77,13 @@ const PostList = () => {
                 <div key={post.id} className="border-b border-gray-200 p-4">
                     <h2 className="text-2xl font-bold">{post.title}</h2>
                     <p>{post.body}</p>
+                    <button
+                        onClick={() => deletePostMutation.mutate(post.id)}
+                        disabled={deletePostMutation.isPending}
+                        className="bg-red-500 text-white px-4 py-2 rounded-md cursor-pointer"
+                    >
+                        {deletePostMutation.isPending ? 'Eliminando…' : 'Eliminar'}
+                    </button>
                 </div>
             ))}
         </div>
