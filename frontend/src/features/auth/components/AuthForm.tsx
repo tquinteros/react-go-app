@@ -15,8 +15,13 @@ export default function AuthForm() {
   const navigate = useNavigate()
 
   const mutation = useMutation({
-    mutationFn: () =>
-      isLogin ? login(email, password) : register(email, password),
+    mutationFn: ({
+      email: e,
+      password: p,
+    }: {
+      email: string
+      password: string
+    }) => (isLogin ? login(e, p) : register(e, p)),
     onSuccess: (data) => {
       setAuth(data.access_token, data.user)
       navigate("/", { replace: true })
@@ -25,7 +30,7 @@ export default function AuthForm() {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    mutation.mutate()
+    mutation.mutate({ email, password })
   }
 
   return (
