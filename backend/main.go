@@ -231,8 +231,23 @@ func refreshHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
-	userID := int(claims["user_id"].(float64))
-	email := claims["email"].(string)
+	userIDVal, ok := claims["user_id"]
+	if !ok || userIDVal == nil {
+		http.Error(w, "invalid refresh token", http.StatusUnauthorized)
+		return
+	}
+	userID := int(userIDVal.(float64))
+
+	var email string
+	if emailVal, ok := claims["email"]; ok && emailVal != nil {
+		email = emailVal.(string)
+	} else {
+		// Old refresh tokens may not have email; fetch from DB
+		if err := conn.QueryRow(context.Background(), "SELECT email FROM users WHERE id = $1", userID).Scan(&email); err != nil {
+			http.Error(w, "invalid refresh token", http.StatusUnauthorized)
+			return
+		}
+	}
 
 	accessToken, err := generateAccessToken(userID, email)
 	if err != nil {
