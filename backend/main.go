@@ -5,7 +5,9 @@ import (
 	"log"
 	"net/http"
 	"github.com/jackc/pgx/v5"
+	"os"
 )
+
 var conn *pgx.Conn
 
 type Post struct {
@@ -106,12 +108,28 @@ func postsHandler(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 }
 
+// func initDB() {
+// 	var err error
+
+// 	conn, err = pgx.Connect(context.Background(),
+// 		"postgres://postgres:password@localhost:5432/blog")
+
+// 	if err != nil {
+// 		log.Fatal("Error connecting to database:", err)
+// 	}
+
+// 	log.Println("Connected to PostgreSQL")
+// }
+
 func initDB() {
 	var err error
 
-	conn, err = pgx.Connect(context.Background(),
-		"postgres://postgres:password@localhost:5432/blog")
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		log.Fatal("DATABASE_URL not set")
+	}
 
+	conn, err = pgx.Connect(context.Background(), databaseURL)
 	if err != nil {
 		log.Fatal("Error connecting to database:", err)
 	}
@@ -125,5 +143,10 @@ func main() {
 	http.HandleFunc("/posts", postsHandler)
 
 	log.Println("server running at http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
