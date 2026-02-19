@@ -7,7 +7,17 @@ import {
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { useCartStore } from "./store"
+import {
+  updateCartItem,
+  deleteCartItem,
+  clearCart,
+  getCart,
+  cartQueryKey,
+} from "./api"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useAuth } from "@/hooks/use-auth"
 import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react"
+import type { CartItem } from "./types"
 
 const placeholderImage =
   "https://placehold.co/80/f4f4f5/71717a?text=No+image"
@@ -22,25 +32,44 @@ function formatPrice(price: number) {
 }
 
 const CartDrawer = () => {
-  const {
-    items,
-    isCartOpen,
-    closeCart,
-    updateQuantity,
-    removeItem,
-    clearCart,
-  } = useCartStore()
+  const { accessToken, isAuthenticated } = useAuth()
+  const { isCartOpen, closeCart } = useCartStore()
+  const queryClient = useQueryClient()
 
+  const { data: cart, isLoading } = useQuery({
+    queryKey: [...cartQueryKey, accessToken ?? ""],
+    queryFn: () => getCart(accessToken!),
+    enabled: isAuthenticated && !!accessToken,
+  })
+
+  const updateQuantityMutation = useMutation({
+    mutationFn: ({ itemId, quantity }: { itemId: number; quantity: number }) =>
+      updateCartItem(accessToken!, itemId, quantity),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: cartQueryKey }),
+  })
+
+  const removeItemMutation = useMutation({
+    mutationFn: (itemId: number) => deleteCartItem(accessToken!, itemId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: cartQueryKey }),
+  })
+
+  const clearCartMutation = useMutation({
+    mutationFn: () => clearCart(accessToken!),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: cartQueryKey }),
+  })
+
+  const items = cart?.items ?? []
   const total = items.reduce(
     (sum, item) => {
-      const hasDiscount = item.product.discount > 0
+      const hasDiscount = item.discount > 0
       const price = hasDiscount
-        ? item.product.price * (1 - item.product.discount / 100)
-        : item.product.price
+        ? item.price * (1 - item.discount / 100)
+        : item.price
       return sum + price * item.quantity
     },
     0
   )
+  const itemCount = items.reduce((n, i) => n + i.quantity, 0)
 
   return (
     <Sheet open={isCartOpen} onOpenChange={(open) => !open && closeCart()}>
@@ -48,35 +77,43 @@ const CartDrawer = () => {
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <ShoppingCart className="size-5" />
-            Cart ({items.reduce((n, i) => n + i.quantity, 0)} items)
+            Cart ({itemCount} items)
           </SheetTitle>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto py-4">
-          {items.length === 0 ? (
+          {!isAuthenticated ? (
+            <p className="text-muted-foreground text-center text-sm">
+              Log in to view your cart.
+            </p>
+          ) : isLoading ? (
+            <p className="text-muted-foreground text-center text-sm">
+              Loading cart…
+            </p>
+          ) : items.length === 0 ? (
             <p className="text-muted-foreground text-center text-sm">
               Your cart is empty.
             </p>
           ) : (
             <ul className="flex flex-col gap-4">
-              {items.map(({ product, quantity }) => {
-                const hasDiscount = product.discount > 0
+              {items.map((item: CartItem) => {
+                const hasDiscount = item.discount > 0
                 const unitPrice = hasDiscount
-                  ? product.price * (1 - product.discount / 100)
-                  : product.price
-                const image = product.images?.[0] ?? placeholderImage
+                  ? item.price * (1 - item.discount / 100)
+                  : item.price
+                const image = item.images?.[0] ?? placeholderImage
                 return (
                   <li
-                    key={product.id}
+                    key={item.id}
                     className="flex gap-3 rounded-lg border border-border/60 p-3"
                   >
                     <img
                       src={image}
-                      alt={product.name}
+                      alt={item.name}
                       className="size-16 shrink-0 rounded-md object-cover"
                     />
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium text-foreground">
-                        {product.name}
+                        {item.name}
                       </p>
                       <p className="text-muted-foreground text-sm">
                         {formatPrice(unitPrice)} each
@@ -88,23 +125,30 @@ const CartDrawer = () => {
                             variant="ghost"
                             size="icon-xs"
                             onClick={() =>
-                              updateQuantity(product.id, quantity - 1)
+                              updateQuantityMutation.mutate({
+                                itemId: item.id,
+                                quantity: item.quantity - 1,
+                              })
                             }
-                            disabled={quantity <= 1}
+                            disabled={item.quantity <= 1 || updateQuantityMutation.isPending}
                             aria-label="Decrease quantity"
                           >
                             <Minus className="size-3" />
                           </Button>
                           <span className="min-w-6 text-center text-sm tabular-nums">
-                            {quantity}
+                            {item.quantity}
                           </span>
                           <Button
                             type="button"
                             variant="ghost"
                             size="icon-xs"
                             onClick={() =>
-                              updateQuantity(product.id, quantity + 1)
+                              updateQuantityMutation.mutate({
+                                itemId: item.id,
+                                quantity: item.quantity + 1,
+                              })
                             }
+                            disabled={updateQuantityMutation.isPending}
                             aria-label="Increase quantity"
                           >
                             <Plus className="size-3" />
@@ -114,7 +158,8 @@ const CartDrawer = () => {
                           type="button"
                           variant="ghost"
                           size="icon-xs"
-                          onClick={() => removeItem(product.id)}
+                          onClick={() => removeItemMutation.mutate(item.id)}
+                          disabled={removeItemMutation.isPending}
                           className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                           aria-label="Remove from cart"
                         >
@@ -123,7 +168,7 @@ const CartDrawer = () => {
                       </div>
                     </div>
                     <p className="shrink-0 font-medium tabular-nums">
-                      {formatPrice(unitPrice * quantity)}
+                      {formatPrice(unitPrice * item.quantity)}
                     </p>
                   </li>
                 )
@@ -141,9 +186,10 @@ const CartDrawer = () => {
               <Button
                 variant="outline"
                 className="flex-1"
-                onClick={clearCart}
+                onClick={() => clearCartMutation.mutate()}
+                disabled={clearCartMutation.isPending}
               >
-                Clear cart
+                {clearCartMutation.isPending ? "…" : "Clear cart"}
               </Button>
               <Button className="flex-1">Checkout</Button>
             </div>

@@ -16,6 +16,9 @@ import {
 import { Button } from "@/components/ui/button"
 import type { Product } from "../types"
 import { useCartStore } from "@/features/cart/store"
+import { addCartItem, cartQueryKey } from "@/features/cart/api"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useAuth } from "@/hooks/use-auth"
 import { ShoppingCart, Tag } from "lucide-react"
 
 interface ProductCardProps {
@@ -36,14 +39,22 @@ function formatPrice(price: number) {
 }
 
 const ProductCard = ({ product, onDelete, isDeleting }: ProductCardProps) => {
-  const addItem = useCartStore((s) => s.addItem)
+  const { accessToken, isAuthenticated } = useAuth()
   const openCart = useCartStore((s) => s.openCart)
+  const queryClient = useQueryClient()
+  const addToCartMutation = useMutation({
+    mutationFn: () => addCartItem(accessToken!, product.id, 1),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: cartQueryKey })
+      openCart()
+    },
+  })
   const images = product.images?.length ? product.images : [placeholderImage]
   const hasDiscount = product.discount > 0
 
   const handleAddToCart = () => {
-    addItem(product)
-    openCart()
+    if (!isAuthenticated || !accessToken) return
+    addToCartMutation.mutate()
   }
 
   return (
@@ -101,9 +112,14 @@ const ProductCard = ({ product, onDelete, isDeleting }: ProductCardProps) => {
         </div>
       </CardContent>
       <CardFooter className="flex gap-2 px-4 pb-4 pt-0">
-        <Button className="flex-1" size="sm" onClick={handleAddToCart}>
+        <Button
+          className="flex-1"
+          size="sm"
+          onClick={handleAddToCart}
+          disabled={!isAuthenticated || addToCartMutation.isPending}
+        >
           <ShoppingCart className="size-4" />
-          Add to cart
+          {addToCartMutation.isPending ? "…" : "Add to cart"}
         </Button>
         {onDelete && (
           <Button

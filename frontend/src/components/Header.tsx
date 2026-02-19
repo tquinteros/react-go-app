@@ -4,12 +4,19 @@ import { ModeToggle } from './theme-toggle'
 import { Button } from '@/components/ui/button'
 import { ShoppingCart } from 'lucide-react'
 import { useCartStore } from '@/features/cart/store'
+import { getCart, cartQueryKey } from '@/features/cart/api'
+import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/use-auth'
 
 function Header() {
-  const { openCart, items } = useCartStore()
-  const { user, logout, isAuthenticated } = useAuth()
-  const itemCount = items.reduce((n, i) => n + i.quantity, 0)
+  const { openCart } = useCartStore()
+  const { user, logout, isAuthenticated, accessToken } = useAuth()
+  const { data: cart } = useQuery({
+    queryKey: [...cartQueryKey, accessToken ?? ''],
+    queryFn: () => getCart(accessToken!),
+    enabled: isAuthenticated && !!accessToken,
+  })
+  const itemCount = cart?.items?.reduce((n, i) => n + i.quantity, 0) ?? 0
 
   return (
     <header className="border-b  sticky top-0 z-10">
