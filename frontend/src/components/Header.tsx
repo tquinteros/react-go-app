@@ -12,7 +12,7 @@ function Header() {
   const itemCount = items.reduce((n, i) => n + i.quantity, 0)
 
   return (
-    <header className="border-b border-gray-700 bg-[#242424] sticky top-0 z-10">
+    <header className="border-b  sticky top-0 z-10">
       <div className="container mx-auto px-4 flex items-center justify-between h-14">
         <Link to="/" className="flex items-center gap-2">
           <img src={reactLogo} className="h-8 w-auto" alt="Logo" />
@@ -20,19 +20,19 @@ function Header() {
         <nav className="flex items-center gap-6">
           <Link
             to="/"
-            className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+            className="text-sm font-medium   transition-colors"
           >
             Home
           </Link>
           <Link
             to="/posts"
-            className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+            className="text-sm font-medium   transition-colors"
           >
             Posts
           </Link>
           <Link
             to="/products"
-            className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+            className="text-sm font-medium   transition-colors"
           >
             Products
           </Link>
@@ -43,7 +43,7 @@ function Header() {
                 variant="ghost"
                 size="sm"
                 onClick={() => logout()}
-                className="text-gray-300 hover:text-white"
+                className=" "
               >
                 Logout
               </Button>
@@ -51,7 +51,7 @@ function Header() {
           ) : (
             <Link
               to="/login"
-              className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+              className="text-sm font-medium   transition-colors"
             >
               Login
             </Link>
@@ -62,7 +62,7 @@ function Header() {
             variant="ghost"
             size="icon"
             onClick={openCart}
-            className="relative text-gray-300 hover:text-white"
+            className="relative "
             aria-label="Open cart"
           >
             <ShoppingCart className="size-5" />
